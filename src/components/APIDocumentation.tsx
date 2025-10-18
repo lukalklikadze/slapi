@@ -304,8 +304,10 @@ export const APIDocumentation: React.FC = () => {
               <pre className="text-code-text font-mono text-sm">
                 {`const axios = require('axios');
 
+
 const apiKey = 'YOUR_API_KEY';
 const baseURL = 'http://localhost:3000';
+
 
 async function getBalance(userId) {
   try {
@@ -331,15 +333,17 @@ async function getBalance(userId) {
               <pre className="text-code-text font-mono text-sm">
                 {`import requests
 
+
 api_key = 'YOUR_API_KEY'
 base_url = 'http://localhost:3000'
+
 
 def get_balance(user_id):
     headers = {
         'Authorization': f'Bearer {api_key}'
     }
     data = {'userId': user_id}
-    
+   
     response = requests.get(
         f'{base_url}/api/bank/balance',
         headers=headers,
