@@ -1,6 +1,7 @@
-// pages/EnvironmentPage.tsx
 import React from 'react';
 import type { Environment } from '../types';
+import TbcSvg from '../assets/TBC.svg';
+import HinkalSvg from '../assets/Hinkal.svg';
 
 interface EnvironmentPageProps {
   onSelectEnvironment: (type: Environment, provider: string) => void;
@@ -15,7 +16,7 @@ export const EnvironmentPage: React.FC<EnvironmentPageProps> = ({
     {
       type: 'bank' as Environment,
       provider: 'TBC Bank',
-      icon: '🏦',
+      icon: TbcSvg,
       description: 'Banking API Simulator',
       features: [
         'Account Management',
@@ -29,7 +30,7 @@ export const EnvironmentPage: React.FC<EnvironmentPageProps> = ({
     {
       type: 'crypto' as Environment,
       provider: 'Hinkal',
-      icon: '₿',
+      icon: HinkalSvg,
       description: 'Crypto API Simulator',
       features: [
         'Wallet Management',
@@ -43,7 +44,7 @@ export const EnvironmentPage: React.FC<EnvironmentPageProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-neutral-900 p-8">
+    <div className="min-h-screen w-full bg-neutral-900 p-8">
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 flex items-center justify-between">
           <div>
@@ -72,7 +73,11 @@ export const EnvironmentPage: React.FC<EnvironmentPageProps> = ({
               <div
                 className={`bg-gradient-to-br ${env.bgGradient} mb-6 inline-block rounded-2xl p-6`}
               >
-                <div className="text-6xl">{env.icon}</div>
+                <img
+                  src={env.icon}
+                  alt={env.provider}
+                  className="h-24 w-24 object-contain"
+                />
               </div>
 
               <h2 className="group-hover:text-primary-500 mb-2 text-2xl font-bold text-neutral-100 transition-colors">
