@@ -24,6 +24,16 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [transactionAmount, setTransactionAmount] = useState(0);
 
+  const [errorModal, setErrorModal] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+  });
+
   const [newUser, setNewUser] = useState({
     id: '',
     username: '',
@@ -41,11 +51,15 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
     (u) => u.id === selectedUserId
   ) as BankUser;
 
+  const showError = (title: string, message: string) => {
+    setErrorModal({ show: true, title, message });
+  };
+
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (simulation.users.some((u) => u.id === newUser.id)) {
-      alert('User ID already exists');
+      showError('User ID Already Exists', 'Please choose a different user ID.');
       return;
     }
 
@@ -79,12 +93,20 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
     ) as BankUser;
 
     if (!fromUser || !toUser) return;
+    
     if (fromUser.balance < transferData.amount) {
-      alert('Insufficient funds');
+      showError(
+        'Insufficient Funds',
+        `${fromUser.username} has ${formatCurrency(fromUser.balance, fromUser.currency)} available.`
+      );
       return;
     }
+    
     if (fromUser.currency !== toUser.currency) {
-      alert('Currency mismatch');
+      showError(
+        'Currency Mismatch',
+        `Cannot transfer ${fromUser.currency} to a ${toUser.currency} account.`
+      );
       return;
     }
 
@@ -131,7 +153,10 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
   const handleWithdraw = (userId: string, amount: number) => {
     const user = simulation.users.find((u) => u.id === userId) as BankUser;
     if (!user || user.balance < amount) {
-      alert('Insufficient funds');
+      showError(
+        'Insufficient Funds',
+        `${user?.username || 'User'} has ${formatCurrency(user?.balance || 0, user?.currency || 'USD')} available.`
+      );
       return;
     }
 
@@ -597,13 +622,14 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                     </label>
                     <input
                       type="number"
-                      value={newUser.balance}
+                      value={newUser.balance || ''}
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
-                          balance: parseFloat(e.target.value),
+                          balance: parseFloat(e.target.value) || 0,
                         })
                       }
+                      placeholder='0.00'
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                       required
                     />
@@ -709,13 +735,14 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                     </label>
                     <input
                       type="number"
-                      value={transferData.amount}
+                      value={transferData.amount || ''}
                       onChange={(e) =>
                         setTransferData({
                           ...transferData,
-                          amount: parseFloat(e.target.value),
+                          amount: parseFloat(e.target.value) || 0,
                         })
                       }
+                      placeholder='0.00'
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                       required
                     />
@@ -763,10 +790,11 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                   <input
                     type="number"
                     step="0.01"
-                    value={transactionAmount}
+                    value={transactionAmount || ''}
                     onChange={(e) =>
-                      setTransactionAmount(parseFloat(e.target.value))
+                      setTransactionAmount(parseFloat(e.target.value) || 0)
                     }
+                    placeholder='0.00'
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     required
                   />
@@ -813,10 +841,11 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                   <input
                     type="number"
                     step="0.01"
-                    value={transactionAmount}
+                    value={transactionAmount || ''}
                     onChange={(e) =>
-                      setTransactionAmount(parseFloat(e.target.value))
+                      setTransactionAmount(parseFloat(e.target.value) || 0)
                     }
+                    placeholder='0.00'
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     required
                   />
@@ -837,6 +866,45 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Error Modal */}
+        {errorModal.show && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl border border-accent-error bg-neutral-800 p-6">
+              <div className="mb-4 flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-error/20">
+                  <svg
+                    className="h-5 w-5 text-accent-error"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-neutral-100">
+                    {errorModal.title}
+                  </h3>
+                  <p className="mt-1 text-sm text-neutral-400">
+                    {errorModal.message}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setErrorModal({ ...errorModal, show: false })}
+                className="bg-accent-error hover:bg-accent-error/90 w-full rounded-lg px-4 py-3 font-medium text-white transition-all"
+              >
+                Understood
+              </button>
             </div>
           </div>
         )}

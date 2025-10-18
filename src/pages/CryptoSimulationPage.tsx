@@ -24,6 +24,16 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
   const [transactionCoin, setTransactionCoin] = useState<CryptoType>('BTC');
   const [transactionAmount, setTransactionAmount] = useState(0);
 
+  const [errorModal, setErrorModal] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+  });
+
   const [newUser, setNewUser] = useState({
     id: '',
     username: '',
@@ -35,7 +45,6 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
   const shortenAddress = (address: string, chars = 6) => {
     if (!address) return '';
     return address.slice(0, chars + 2) + '...' + address.slice(-chars);
-    // +2 to include "0x" prefix
   };
 
   const [transferData, setTransferData] = useState({
@@ -49,16 +58,20 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
     | CryptoUser
     | undefined;
 
+  const showError = (title: string, message: string) => {
+    setErrorModal({ show: true, title, message });
+  };
+
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!newUser.id || !newUser.username) {
-      alert('Please provide user id and username');
+      showError('Missing Information', 'Please provide both user ID and username.');
       return;
     }
 
     if (simulation.users.some((u) => u.id === newUser.id)) {
-      alert('User ID already exists');
+      showError('User ID Already Exists', 'Please choose a different user ID.');
       return;
     }
 
@@ -97,11 +110,14 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
     ) as CryptoUser | undefined;
 
     if (!fromUser || !toUser) {
-      alert('Select both users');
+      showError('Invalid Selection', 'Please select both from and to users.');
       return;
     }
     if ((fromUser.balances[transferData.coin] || 0) < transferData.amount) {
-      alert('Insufficient funds');
+      showError(
+        'Insufficient Funds',
+        `${fromUser.username} has ${(fromUser.balances[transferData.coin] || 0).toFixed(6)} ${transferData.coin} available.`
+      );
       return;
     }
 
@@ -153,7 +169,10 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       | CryptoUser
       | undefined;
     if (!user || (user.balances[coin] || 0) < amount) {
-      alert('Insufficient funds');
+      showError(
+        'Insufficient Funds',
+        `${user?.username || 'User'} has ${((user?.balances[coin] || 0).toFixed(6))} ${coin} available.`
+      );
       return;
     }
 
@@ -645,13 +664,14 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     <input
                       type="number"
                       step="0.000001"
-                      value={newUser.btc}
+                      value={newUser.btc || ''}
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
                           btc: parseFloat(e.target.value) || 0,
                         })
                       }
+                      placeholder='0.00'
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     />
                   </div>
@@ -662,13 +682,14 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     <input
                       type="number"
                       step="0.000001"
-                      value={newUser.eth}
+                      value={newUser.eth || ''}
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
                           eth: parseFloat(e.target.value) || 0,
                         })
                       }
+                      placeholder='0.00'
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     />
                   </div>
@@ -679,13 +700,14 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     <input
                       type="number"
                       step="0.01"
-                      value={newUser.usdt}
+                      value={newUser.usdt || ''}
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
                           usdt: parseFloat(e.target.value) || 0,
                         })
                       }
+                      placeholder='0.00'
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     />
                   </div>
@@ -736,10 +758,11 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                   <input
                     type="number"
                     step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
-                    value={transactionAmount}
+                    value={transactionAmount || ''}
                     onChange={(e) =>
                       setTransactionAmount(parseFloat(e.target.value) || 0)
                     }
+                    placeholder='0.00'
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     required
                   />
@@ -790,10 +813,11 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                   <input
                     type="number"
                     step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
-                    value={transactionAmount}
+                    value={transactionAmount || ''}
                     onChange={(e) =>
                       setTransactionAmount(parseFloat(e.target.value) || 0)
                     }
+                    placeholder='0.00'
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     required
                   />
@@ -906,13 +930,14 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     <input
                       type="number"
                       step="0.000001"
-                      value={transferData.amount}
+                      value={transferData.amount || ''}
                       onChange={(e) =>
                         setTransferData({
                           ...transferData,
                           amount: parseFloat(e.target.value) || 0,
                         })
                       }
+                      placeholder='0.00'
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                       required
                     />
@@ -937,9 +962,48 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
-  );
-};
 
+        {/* Error Modal */}
+        {errorModal.show && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl border border-accent-error bg-neutral-800 p-6">
+              <div className="mb-4 flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-error/20">
+                  <svg
+                    className="h-5 w-5 text-accent-error"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-neutral-100">
+                    {errorModal.title}
+                  </h3>
+                  <p className="mt-1 text-sm text-neutral-400">
+                    {errorModal.message}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setErrorModal({ ...errorModal, show: false })}
+                className="bg-accent-error hover:bg-accent-error/90 w-full rounded-lg px-4 py-3 font-medium text-white transition-all"
+              >
+                Understood
+              </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              };
+              
 export default CryptoSimulationPage;
