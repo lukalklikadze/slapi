@@ -24,6 +24,7 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
 }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newSimName, setNewSimName] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Simulation | null>(null);
 
   const filteredSims = simulations.filter(
     (s) => s.type === selectedEnvironment && s.provider === selectedProvider
@@ -41,6 +42,7 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
   return (
     <div className="min-h-screen bg-neutral-900 p-8">
       <div className="mx-auto max-w-6xl">
+        {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -71,27 +73,32 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-primary-700 hover:bg-primary-600 flex items-center gap-2 rounded-lg px-6 py-3 font-medium text-white shadow-[0_2px_8px_rgba(15,23,42,0.08)] transition-all"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+
+          {/* Show top-right "New Simulation" only if there are simulations */}
+          {filteredSims.length > 0 && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-primary-700 hover:bg-primary-600 flex items-center gap-2 rounded-lg px-6 py-3 font-medium text-white shadow-[0_2px_8px_rgba(15,23,42,0.08)] transition-all"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            New Simulation
-          </button>
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              New Simulation
+            </button>
+          )}
         </div>
 
+        {/* Empty State */}
         {filteredSims.length === 0 ? (
           <div className="rounded-xl border border-neutral-700 bg-neutral-800 p-12 text-center">
             <div className="mb-4 inline-block rounded-full bg-neutral-700 p-6">
@@ -136,6 +143,7 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
             </button>
           </div>
         ) : (
+          /* Simulations Grid */
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredSims.map((sim) => (
               <div
@@ -143,8 +151,9 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
                 className="hover:border-primary-600 group cursor-pointer rounded-xl border border-neutral-700 bg-neutral-800 p-6 transition-all"
                 onClick={() => onSelectSimulation(sim)}
               >
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="bg-primary-900 rounded-lg p-3">
+                {/* ICONS ROW */}
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="bg-primary-900 flex items-center justify-center rounded-lg p-3">
                     <svg
                       className="text-primary-500 h-6 w-6"
                       fill="none"
@@ -162,11 +171,9 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm('Delete this simulation?')) {
-                        onDeleteSimulation(sim.id);
-                      }
+                      setDeleteTarget(sim);
                     }}
-                    className="hover:text-accent-error rounded-lg p-2 text-neutral-500 transition-all hover:bg-neutral-700"
+                    className="rounded-lg p-2 text-red-500 transition-all hover:bg-neutral-700 hover:text-red-400"
                   >
                     <svg
                       className="h-5 w-5"
@@ -189,7 +196,8 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
                 </h3>
 
                 <div className="mb-4 space-y-2 text-sm">
-                  <div className="flex items-center text-neutral-400">
+                  {/* USERS WITH TOOLTIP */}
+                  <div className="group/tooltip relative flex items-center text-neutral-400">
                     <svg
                       className="mr-2 h-4 w-4"
                       fill="none"
@@ -204,7 +212,17 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
                       />
                     </svg>
                     {sim.users.length} user{sim.users.length !== 1 ? 's' : ''}
+                    {sim.users.length > 0 && (
+                      <div className="absolute bottom-full left-0 mb-2 hidden w-max max-w-[220px] rounded-md bg-neutral-800 px-3 py-2 text-xs text-neutral-300 shadow-lg transition-opacity duration-200 group-hover/tooltip:block">
+                        {sim.users
+                          .slice(0, 3)
+                          .map((u) => ('username' in u ? u.username : u.id))
+                          .join(', ')}
+                        {sim.users.length > 3 && '...'}
+                      </div>
+                    )}
                   </div>
+
                   <div className="flex items-center text-neutral-400">
                     <svg
                       className="mr-2 h-4 w-4"
@@ -236,6 +254,7 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
           </div>
         )}
 
+        {/* Create Simulation Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-800 p-6">
@@ -276,6 +295,35 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-sm rounded-xl border border-neutral-700 bg-neutral-800 p-6 text-center">
+              <h3 className="mb-4 text-lg font-bold text-neutral-100">
+                Are you sure you want to delete simulation "{deleteTarget.name}
+                "?
+              </h3>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => {
+                    onDeleteSimulation(deleteTarget.id);
+                    setDeleteTarget(null);
+                  }}
+                  className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-all hover:bg-red-500"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-all hover:bg-blue-500"
+                >
+                  No
+                </button>
+              </div>
             </div>
           </div>
         )}
