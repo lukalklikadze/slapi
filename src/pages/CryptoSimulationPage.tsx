@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import type { Simulation, CryptoUser, CryptoType } from '../types';
 import { formatDate } from '../utils/helpers';
 
+
 interface CryptoSimulationPageProps {
   simulation: Simulation;
   onUpdateSimulation: (simulation: Simulation) => void;
   onBack: () => void;
 }
+
 
 export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
   simulation,
@@ -18,6 +20,11 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
   const [showAddUser, setShowAddUser] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showAPIKey, setShowAPIKey] = useState(false);
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [transactionCoin, setTransactionCoin] = useState<CryptoType>('BTC');
+  const [transactionAmount, setTransactionAmount] = useState(0);
+
 
   const [newUser, setNewUser] = useState({
     username: '',
@@ -26,6 +33,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
     usdt: 0,
   });
 
+
   const [transferData, setTransferData] = useState({
     fromUserId: '',
     toUserId: '',
@@ -33,9 +41,11 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
     coin: 'BTC' as CryptoType,
   });
 
+
   const selectedUser = simulation.users.find(
     (u) => u.id === selectedUserId
   ) as CryptoUser;
+
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,14 +65,17 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       transactions: [],
     };
 
+
     onUpdateSimulation({
       ...simulation,
       users: [...simulation.users, user],
     });
 
+
     setNewUser({ username: '', btc: 0, eth: 0, usdt: 0 });
     setShowAddUser(false);
   };
+
 
   const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,11 +86,13 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       (u) => u.id === transferData.toUserId
     ) as CryptoUser;
 
+
     if (!fromUser || !toUser) return;
     if ((fromUser.balances[transferData.coin] || 0) < transferData.amount) {
       alert('Insufficient funds');
       return;
     }
+
 
     const transaction = {
       id: Math.random().toString(36).substr(2, 9),
@@ -90,20 +105,24 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       status: 'success' as const,
     };
 
+
     fromUser.balances[transferData.coin] -= transferData.amount;
     toUser.balances[transferData.coin] =
       (toUser.balances[transferData.coin] || 0) + transferData.amount;
     fromUser.transactions.push(transaction);
     toUser.transactions.push(transaction);
 
+
     onUpdateSimulation({ ...simulation });
     setTransferData({ fromUserId: '', toUserId: '', amount: 0, coin: 'BTC' });
     setShowTransfer(false);
   };
 
+
   const handleDeposit = (userId: string, amount: number, coin: CryptoType) => {
     const user = simulation.users.find((u) => u.id === userId) as CryptoUser;
     if (!user) return;
+
 
     const transaction = {
       id: Math.random().toString(36).substr(2, 9),
@@ -115,10 +134,12 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       status: 'success' as const,
     };
 
+
     user.balances[coin] = (user.balances[coin] || 0) + amount;
     user.transactions.push(transaction);
     onUpdateSimulation({ ...simulation });
   };
+
 
   const handleWithdraw = (userId: string, amount: number, coin: CryptoType) => {
     const user = simulation.users.find((u) => u.id === userId) as CryptoUser;
@@ -126,6 +147,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       alert('Insufficient funds');
       return;
     }
+
 
     const transaction = {
       id: Math.random().toString(36).substr(2, 9),
@@ -137,16 +159,19 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       status: 'success' as const,
     };
 
+
     user.balances[coin] -= amount;
     user.transactions.push(transaction);
     onUpdateSimulation({ ...simulation });
   };
+
 
   const coinColors: Record<CryptoType, string> = {
     BTC: 'text-accent-crypto',
     ETH: 'text-accent-info',
     USDT: 'text-accent-success',
   };
+
 
   return (
     <div className="min-h-screen bg-neutral-900 p-8">
@@ -179,6 +204,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
               <p className="mt-1 text-neutral-400">{simulation.provider}</p>
             </div>
           </div>
+
 
           <div className="flex gap-3">
             <button
@@ -215,6 +241,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
           </div>
         </div>
 
+
         {/* API Key Display */}
         {showAPIKey && (
           <div className="mb-6 rounded-lg border border-neutral-700 bg-neutral-800 p-4">
@@ -238,13 +265,18 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Users List */}
-          <div className="lg:col-span-1">
-            <h2 className="mb-4 text-xl font-bold text-neutral-100">
-              Users ({simulation.users.length})
-            </h2>
-            <div className="space-y-3">
+
+        {!selectedUser ? (
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-neutral-100">
+                Users ({simulation.users.length})
+              </h2>
+              <p className="text-sm  text-neutral-100">
+                Click on a user to view details
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {simulation.users.map((user) => {
                 const cryptoUser = user as CryptoUser;
                 const totalValue =
@@ -252,23 +284,20 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                   (cryptoUser.balances.ETH || 0) * 3000 +
                   (cryptoUser.balances.USDT || 0);
 
+
                 return (
                   <div
                     key={user.id}
                     onClick={() => setSelectedUserId(user.id)}
-                    className={`cursor-pointer rounded-lg border-2 bg-neutral-800 p-4 transition-all ${
-                      selectedUserId === user.id
-                        ? 'border-primary-600'
-                        : 'border-neutral-700 hover:border-neutral-600'
-                    }`}
+                    className="cursor-pointer rounded-lg border-2 border-neutral-700 bg-neutral-800 p-5 transition-all hover:border-neutral-600 hover:bg-neutral-750"
                   >
-                    <h3 className="mb-2 font-bold text-neutral-100">
+                    <h3 className="mb-2 text-lg font-bold text-neutral-100">
                       {cryptoUser.username}
                     </h3>
-                    <p className="mb-3 font-mono text-xs break-all text-neutral-400">
+                    <p className="mb-4 font-mono text-xs break-all text-neutral-400">
                       {cryptoUser.walletAddress}
                     </p>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-400">BTC:</span>
                         <span className={coinColors.BTC}>
@@ -288,9 +317,9 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                         </span>
                       </div>
                     </div>
-                    <div className="mt-3 border-t border-neutral-700 pt-3">
+                    <div className="mt-4 border-t border-neutral-700 pt-3">
                       <p className="text-xs text-neutral-500">Est. Value</p>
-                      <p className="text-accent-success text-sm font-bold">
+                      <p className="text-accent-success text-lg font-bold">
                         ${totalValue.toFixed(2)}
                       </p>
                     </div>
@@ -299,10 +328,47 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
               })}
             </div>
           </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-12">
+            {/* User Selection Sidebar */}
+            <div className="lg:col-span-3">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-neutral-100">Users</h2>
+                <button
+                  onClick={() => setSelectedUserId(null)}
+                  className="text-sm text-neutral-400 hover:text-neutral-300"
+                >
+                  View All
+                </button>
+              </div>
+              <div className="space-y-2">
+                {simulation.users.map((user) => {
+                  const cryptoUser = user as CryptoUser;
+                  return (
+                    <div
+                      key={user.id}
+                      onClick={() => setSelectedUserId(user.id)}
+                      className={`cursor-pointer rounded-lg border-2 bg-neutral-800 p-3 transition-all ${
+                        selectedUserId === user.id
+                          ? 'border-primary-600'
+                          : 'border-neutral-700 hover:border-neutral-600'
+                      }`}
+                    >
+                      <p className="font-medium text-neutral-100">
+                        {cryptoUser.username}
+                      </p>
+                      <p className="mt-1 font-mono text-xs text-neutral-400">
+                        {cryptoUser.walletAddress.slice(0, 12)}...
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-          {/* User Details */}
-          <div className="lg:col-span-2">
-            {selectedUser ? (
+
+            {/* User Details */}
+            <div className="lg:col-span-9">
               <div className="rounded-lg border border-neutral-700 bg-neutral-800 p-6">
                 <div className="mb-6">
                   <h2 className="mb-1 text-2xl font-bold text-neutral-100">
@@ -312,6 +378,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     {selectedUser.walletAddress}
                   </p>
                 </div>
+
 
                 {/* Balances */}
                 <div className="mb-6 grid grid-cols-3 gap-4">
@@ -327,19 +394,15 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                   ))}
                 </div>
 
+
                 {/* Quick Actions */}
                 <div className="mb-6 grid grid-cols-3 gap-3">
                   {(['BTC', 'ETH', 'USDT'] as CryptoType[]).map((coin) => (
                     <div key={coin} className="space-y-2">
                       <button
                         onClick={() => {
-                          const amount = prompt(`Deposit ${coin} amount:`);
-                          if (amount)
-                            handleDeposit(
-                              selectedUser.id,
-                              parseFloat(amount),
-                              coin
-                            );
+                          setTransactionCoin(coin);
+                          setShowDeposit(true);
                         }}
                         className="bg-accent-success hover:bg-accent-success/90 w-full rounded-lg px-3 py-2 text-sm font-medium text-white transition-all"
                       >
@@ -347,13 +410,8 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                       </button>
                       <button
                         onClick={() => {
-                          const amount = prompt(`Withdraw ${coin} amount:`);
-                          if (amount)
-                            handleWithdraw(
-                              selectedUser.id,
-                              parseFloat(amount),
-                              coin
-                            );
+                          setTransactionCoin(coin);
+                          setShowWithdraw(true);
                         }}
                         className="bg-accent-warning hover:bg-accent-warning/90 w-full rounded-lg px-3 py-2 text-sm font-medium text-white transition-all"
                       >
@@ -362,6 +420,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     </div>
                   ))}
                 </div>
+
 
                 {/* Transactions */}
                 <div>
@@ -426,15 +485,13 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                   )}
                 </div>
               </div>
-            ) : (
-              <div className="rounded-lg border border-neutral-700 bg-neutral-800 p-12 text-center">
-                <p className="text-neutral-500">
-                  Select a user to view details
-                </p>
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
+
+
+        {/* --- Modals --- */}
+
 
         {/* Add User Modal */}
         {showAddUser && (
@@ -530,6 +587,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
             </div>
           </div>
         )}
+
 
         {/* Transfer Modal */}
         {showTransfer && (
@@ -644,6 +702,108 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     className="bg-primary-700 hover:bg-primary-600 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
                   >
                     Transfer
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+
+        {/* Deposit Modal */}
+        {showDeposit && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-800 p-6">
+              <h3 className="mb-4 text-xl font-bold text-neutral-100">
+                Deposit {transactionCoin}
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleDeposit(selectedUser.id, transactionAmount, transactionCoin);
+                  setShowDeposit(false);
+                  setTransactionAmount(0);
+                }}
+              >
+                <div className="mb-6">
+                  <label className="mb-2 block text-sm font-medium text-neutral-300">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
+                    value={transactionAmount}
+                    onChange={(e) =>
+                      setTransactionAmount(parseFloat(e.target.value))
+                    }
+                    className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeposit(false)}
+                    className="flex-1 rounded-lg bg-neutral-700 px-4 py-3 font-medium text-neutral-300 transition-all hover:bg-neutral-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-accent-success hover:bg-accent-success/90 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+
+        {/* Withdraw Modal */}
+        {showWithdraw && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-800 p-6">
+              <h3 className="mb-4 text-xl font-bold text-neutral-100">
+                Withdraw {transactionCoin}
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleWithdraw(selectedUser.id, transactionAmount, transactionCoin);
+                  setShowWithdraw(false);
+                  setTransactionAmount(0);
+                }}
+              >
+                <div className="mb-6">
+                  <label className="mb-2 block text-sm font-medium text-neutral-300">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
+                    value={transactionAmount}
+                    onChange={(e) =>
+                      setTransactionAmount(parseFloat(e.target.value))
+                    }
+                    className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowWithdraw(false)}
+                    className="flex-1 rounded-lg bg-neutral-700 px-4 py-3 font-medium text-neutral-300 transition-all hover:bg-neutral-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-accent-warning hover:bg-accent-warning/90 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
+                  >
+                    Confirm
                   </button>
                 </div>
               </form>
