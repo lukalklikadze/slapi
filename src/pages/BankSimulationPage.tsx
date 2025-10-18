@@ -19,6 +19,10 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
   const [showTransfer, setShowTransfer] = useState(false);
   const [showAPIKey, setShowAPIKey] = useState(false);
 
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [transactionAmount, setTransactionAmount] = useState(0);
+
   const [newUser, setNewUser] = useState({
     username: '',
     balance: 0,
@@ -228,37 +232,38 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Users List */}
-          <div className="lg:col-span-1">
-            <h2 className="mb-4 text-xl font-bold text-neutral-100">
-              Users ({simulation.users.length})
-            </h2>
-            <div className="space-y-3">
+        {/* User Views */}
+        {!selectedUser ? (
+          <div>
+            <div className="mb-6 text-center">
+              <h2 className="text-xl font-bold text-neutral-100">
+                Users ({simulation.users.length})
+              </h2>
+              <p className="mt-1 text-sm text-neutral-500">
+                Click on a user to view details
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {simulation.users.map((user) => {
                 const bankUser = user as BankUser;
                 return (
                   <div
                     key={user.id}
                     onClick={() => setSelectedUserId(user.id)}
-                    className={`cursor-pointer rounded-lg border-2 bg-neutral-800 p-4 transition-all ${
-                      selectedUserId === user.id
-                        ? 'border-primary-600'
-                        : 'border-neutral-700 hover:border-neutral-600'
-                    }`}
+                    className="cursor-pointer rounded-lg border-2 border-neutral-700 bg-neutral-800 p-5 transition-all hover:border-neutral-600 hover:bg-neutral-750"
                   >
                     <div className="mb-2 flex items-start justify-between">
-                      <h3 className="font-bold text-neutral-100">
+                      <h3 className="text-lg font-bold text-neutral-100">
                         {bankUser.username}
                       </h3>
                       <span className="text-xs text-neutral-500">
                         {bankUser.currency}
                       </span>
                     </div>
-                    <p className="mb-2 font-mono text-xs text-neutral-400">
+                    <p className="mb-4 font-mono text-xs text-neutral-400">
                       {bankUser.accountNumber}
                     </p>
-                    <p className="text-accent-success text-lg font-bold">
+                    <p className="text-accent-success text-2xl font-bold">
                       {formatCurrency(bankUser.balance, bankUser.currency)}
                     </p>
                   </div>
@@ -266,10 +271,46 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
               })}
             </div>
           </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-12">
+            {/* Sidebar */}
+            <div className="lg:col-span-3">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-neutral-100">Users</h2>
+                <button
+                  onClick={() => setSelectedUserId(null)}
+                  className="text-sm text-neutral-400 hover:text-neutral-300"
+                >
+                  View All
+                </button>
+              </div>
+              <div className="space-y-2">
+                {simulation.users.map((user) => {
+                  const bankUser = user as BankUser;
+                  return (
+                    <div
+                      key={user.id}
+                      onClick={() => setSelectedUserId(user.id)}
+                      className={`cursor-pointer rounded-lg border-2 bg-neutral-800 p-3 transition-all ${
+                        selectedUserId === user.id
+                          ? 'border-primary-600'
+                          : 'border-neutral-700 hover:border-neutral-600'
+                      }`}
+                    >
+                      <p className="font-medium text-neutral-100">
+                        {bankUser.username}
+                      </p>
+                      <p className="mt-1 font-mono text-xs text-neutral-400">
+                        {bankUser.accountNumber}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-          {/* User Details */}
-          <div className="lg:col-span-2">
-            {selectedUser ? (
+            {/* User Details */}
+            <div className="lg:col-span-9">
               <div className="rounded-lg border border-neutral-700 bg-neutral-800 p-6">
                 <div className="mb-6 flex items-start justify-between">
                   <div>
@@ -294,21 +335,13 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                 {/* Quick Actions */}
                 <div className="mb-6 grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => {
-                      const amount = prompt('Deposit amount:');
-                      if (amount)
-                        handleDeposit(selectedUser.id, parseFloat(amount));
-                    }}
+                    onClick={() => setShowDeposit(true)}
                     className="bg-accent-success hover:bg-accent-success/90 rounded-lg px-4 py-3 font-medium text-white transition-all"
                   >
                     Deposit
                   </button>
                   <button
-                    onClick={() => {
-                      const amount = prompt('Withdraw amount:');
-                      if (amount)
-                        handleWithdraw(selectedUser.id, parseFloat(amount));
-                    }}
+                    onClick={() => setShowWithdraw(true)}
                     className="bg-accent-warning hover:bg-accent-warning/90 rounded-lg px-4 py-3 font-medium text-white transition-all"
                   >
                     Withdraw
@@ -376,15 +409,11 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                   )}
                 </div>
               </div>
-            ) : (
-              <div className="rounded-lg border border-neutral-700 bg-neutral-800 p-12 text-center">
-                <p className="text-neutral-500">
-                  Select a user to view details
-                </p>
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* --- Modals --- */}
 
         {/* Add User Modal */}
         {showAddUser && (
@@ -491,15 +520,11 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                       required
                     >
                       <option value="">Select user</option>
-                      {simulation.users.map((u) => {
-                        const user = u as BankUser;
-                        return (
-                          <option key={user.id} value={user.id}>
-                            {user.username} -{' '}
-                            {formatCurrency(user.balance, user.currency)}
-                          </option>
-                        );
-                      })}
+                      {simulation.users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.username}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -518,14 +543,11 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                       required
                     >
                       <option value="">Select user</option>
-                      {simulation.users.map((u) => {
-                        const user = u as BankUser;
-                        return (
-                          <option key={user.id} value={user.id}>
-                            {user.username}
-                          </option>
-                        );
-                      })}
+                      {simulation.users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.username}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -534,7 +556,6 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                     </label>
                     <input
                       type="number"
-                      step="0.01"
                       value={transferData.amount}
                       onChange={(e) =>
                         setTransferData({
@@ -566,7 +587,109 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
             </div>
           </div>
         )}
+
+        {/* Deposit Modal */}
+        {showDeposit && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-800 p-6">
+              <h3 className="mb-4 text-xl font-bold text-neutral-100">
+                Deposit Funds
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleDeposit(selectedUser.id, transactionAmount);
+                  setShowDeposit(false);
+                  setTransactionAmount(0);
+                }}
+              >
+                <div className="mb-6">
+                  <label className="mb-2 block text-sm font-medium text-neutral-300">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={transactionAmount}
+                    onChange={(e) =>
+                      setTransactionAmount(parseFloat(e.target.value))
+                    }
+                    className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeposit(false)}
+                    className="flex-1 rounded-lg bg-neutral-700 px-4 py-3 font-medium text-neutral-300 transition-all hover:bg-neutral-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-accent-success hover:bg-accent-success/90 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Withdraw Modal */}
+        {showWithdraw && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-800 p-6">
+              <h3 className="mb-4 text-xl font-bold text-neutral-100">
+                Withdraw Funds
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleWithdraw(selectedUser.id, transactionAmount);
+                  setShowWithdraw(false);
+                  setTransactionAmount(0);
+                }}
+              >
+                <div className="mb-6">
+                  <label className="mb-2 block text-sm font-medium text-neutral-300">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={transactionAmount}
+                    onChange={(e) =>
+                      setTransactionAmount(parseFloat(e.target.value))
+                    }
+                    className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowWithdraw(false)}
+                    className="flex-1 rounded-lg bg-neutral-700 px-4 py-3 font-medium text-neutral-300 transition-all hover:bg-neutral-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-accent-warning hover:bg-accent-warning/90 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+export default BankSimulationPage;
