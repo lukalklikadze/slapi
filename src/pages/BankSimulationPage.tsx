@@ -255,7 +255,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                         {bankUser.currency}
                       </span>
                     </div>
-                    <p className="mb-2 font-mono text-sm text-xs text-neutral-400">
+                    <p className="mb-2 font-mono text-xs text-neutral-400">
                       {bankUser.accountNumber}
                     </p>
                     <p className="text-accent-success text-lg font-bold">
