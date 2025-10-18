@@ -66,7 +66,10 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
     e.preventDefault();
 
     if (!newUser.id || !newUser.username) {
-      showError('Missing Information', 'Please provide both user ID and username.');
+      showError(
+        'Missing Information',
+        'Please provide both user ID and username.'
+      );
       return;
     }
 
@@ -171,7 +174,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
     if (!user || (user.balances[coin] || 0) < amount) {
       showError(
         'Insufficient Funds',
-        `${user?.username || 'User'} has ${((user?.balances[coin] || 0).toFixed(6))} ${coin} available.`
+        `${user?.username || 'User'} has ${(user?.balances[coin] || 0).toFixed(6)} ${coin} available.`
       );
       return;
     }
@@ -289,7 +292,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
 
         {!selectedUser ? (
           <div>
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-col items-center text-center">
               <h2 className="text-xl font-bold text-neutral-100">
                 Users ({simulation.users.length})
               </h2>
@@ -671,7 +674,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                           btc: parseFloat(e.target.value) || 0,
                         })
                       }
-                      placeholder='0.00'
+                      placeholder="0.00"
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     />
                   </div>
@@ -689,7 +692,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                           eth: parseFloat(e.target.value) || 0,
                         })
                       }
-                      placeholder='0.00'
+                      placeholder="0.00"
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     />
                   </div>
@@ -707,7 +710,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                           usdt: parseFloat(e.target.value) || 0,
                         })
                       }
-                      placeholder='0.00'
+                      placeholder="0.00"
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     />
                   </div>
@@ -762,7 +765,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     onChange={(e) =>
                       setTransactionAmount(parseFloat(e.target.value) || 0)
                     }
-                    placeholder='0.00'
+                    placeholder="0.00"
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     required
                   />
@@ -817,7 +820,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     onChange={(e) =>
                       setTransactionAmount(parseFloat(e.target.value) || 0)
                     }
-                    placeholder='0.00'
+                    placeholder="0.00"
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     required
                   />
@@ -937,7 +940,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                           amount: parseFloat(e.target.value) || 0,
                         })
                       }
-                      placeholder='0.00'
+                      placeholder="0.00"
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                       required
                     />
@@ -966,11 +969,11 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
         {/* Error Modal */}
         {errorModal.show && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl border border-accent-error bg-neutral-800 p-6">
+            <div className="border-accent-error w-full max-w-md rounded-xl border bg-neutral-800 p-6">
               <div className="mb-4 flex items-start gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-error/20">
+                <div className="bg-accent-error/20 flex h-8 w-8 items-center justify-center rounded-lg">
                   <svg
-                    className="h-5 w-5 text-accent-error"
+                    className="text-accent-error h-5 w-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -998,12 +1001,12 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
               >
                 Understood
               </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              };
-              
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default CryptoSimulationPage;

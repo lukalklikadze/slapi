@@ -6,6 +6,7 @@ import { SimulationsPage } from './pages/SimulationsPage';
 import { BankSimulationPage } from './pages/BankSimulationPage';
 import { CryptoSimulationPage } from './pages/CryptoSimulationPage';
 import { APITester } from './components/APITester';
+import { FloatingBackground } from './components/FloatingBackground';
 import { appReducer, initialState } from './store/appStore';
 import type { Simulation, Environment, APIRequest } from './types';
 import { generateAPIKey, generateId } from './utils/helpers';
@@ -67,6 +68,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-neutral-900">
+      <FloatingBackground />
+
       {state.currentPage === 'login' && <LoginPage onLogin={handleLogin} />}
 
       {state.currentPage === 'environment' && (

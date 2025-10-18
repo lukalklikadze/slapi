@@ -68,7 +68,7 @@ export const EnvironmentPage: React.FC<EnvironmentPageProps> = ({
             <div
               key={env.provider}
               onClick={() => onSelectEnvironment(env.type, env.provider)}
-              className="hover:border-primary-600 group transform cursor-pointer rounded-xl border-2 border-neutral-700 bg-neutral-800 p-8 transition-all hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(15,23,42,0.16)]"
+              className="group hover:border-primary-600 transform cursor-pointer rounded-xl border-2 border-neutral-700 bg-neutral-800/70 p-8 transition-all hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(15,23,42,0.16)]"
             >
               <div
                 className={`bg-gradient-to-br ${env.bgGradient} mb-6 inline-block rounded-2xl p-6`}
@@ -110,7 +110,7 @@ export const EnvironmentPage: React.FC<EnvironmentPageProps> = ({
               </div>
 
               <div className="mt-6 border-t border-neutral-700 pt-6">
-                <button className="text-primary-500 group-hover:text-primary-400 flex items-center font-medium transition-colors">
+                <button className="text-primary-500 flex items-center font-medium transition-transform group-hover:scale-105">
                   Get Started
                   <svg
                     className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1"

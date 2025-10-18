@@ -93,7 +93,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
     ) as BankUser;
 
     if (!fromUser || !toUser) return;
-    
+
     if (fromUser.balance < transferData.amount) {
       showError(
         'Insufficient Funds',
@@ -101,7 +101,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
       );
       return;
     }
-    
+
     if (fromUser.currency !== toUser.currency) {
       showError(
         'Currency Mismatch',
@@ -268,11 +268,11 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
         {/* User Views */}
         {!selectedUser ? (
           <div>
-            <div className="mb-6 text-center">
+            <div className="mb-4 flex flex-col items-center text-center">
               <h2 className="text-xl font-bold text-neutral-100">
                 Users ({simulation.users.length})
               </h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <p className="text-sm text-neutral-100">
                 Click on a user to view details
               </p>
             </div>
@@ -629,7 +629,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                           balance: parseFloat(e.target.value) || 0,
                         })
                       }
-                      placeholder='0.00'
+                      placeholder="0.00"
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                       required
                     />
@@ -742,7 +742,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                           amount: parseFloat(e.target.value) || 0,
                         })
                       }
-                      placeholder='0.00'
+                      placeholder="0.00"
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                       required
                     />
@@ -794,7 +794,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                     onChange={(e) =>
                       setTransactionAmount(parseFloat(e.target.value) || 0)
                     }
-                    placeholder='0.00'
+                    placeholder="0.00"
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     required
                   />
@@ -845,7 +845,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                     onChange={(e) =>
                       setTransactionAmount(parseFloat(e.target.value) || 0)
                     }
-                    placeholder='0.00'
+                    placeholder="0.00"
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
                     required
                   />
@@ -873,11 +873,11 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
         {/* Error Modal */}
         {errorModal.show && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl border border-accent-error bg-neutral-800 p-6">
+            <div className="border-accent-error w-full max-w-md rounded-xl border bg-neutral-800 p-6">
               <div className="mb-4 flex items-start gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-error/20">
+                <div className="bg-accent-error/20 flex h-8 w-8 items-center justify-center rounded-lg">
                   <svg
-                    className="h-5 w-5 text-accent-error"
+                    className="text-accent-error h-5 w-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
