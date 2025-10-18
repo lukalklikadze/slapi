@@ -3,13 +3,11 @@ import React, { useState } from 'react';
 import type { Simulation, CryptoUser, CryptoType } from '../types';
 import { formatDate } from '../utils/helpers';
 
-
 interface CryptoSimulationPageProps {
   simulation: Simulation;
   onUpdateSimulation: (simulation: Simulation) => void;
   onBack: () => void;
 }
-
 
 export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
   simulation,
@@ -22,17 +20,23 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
   const [showAPIKey, setShowAPIKey] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [transactionCoin, setTransactionCoin] = useState<CryptoType>('BTC');
   const [transactionAmount, setTransactionAmount] = useState(0);
 
-
   const [newUser, setNewUser] = useState({
+    id: '',
     username: '',
     btc: 0,
     eth: 0,
     usdt: 0,
   });
 
+  const shortenAddress = (address: string, chars = 6) => {
+    if (!address) return '';
+    return address.slice(0, chars + 2) + '...' + address.slice(-chars);
+    // +2 to include "0x" prefix
+  };
 
   const [transferData, setTransferData] = useState({
     fromUserId: '',
@@ -41,16 +45,25 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
     coin: 'BTC' as CryptoType,
   });
 
-
-  const selectedUser = simulation.users.find(
-    (u) => u.id === selectedUserId
-  ) as CryptoUser;
-
+  const selectedUser = simulation.users.find((u) => u.id === selectedUserId) as
+    | CryptoUser
+    | undefined;
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!newUser.id || !newUser.username) {
+      alert('Please provide user id and username');
+      return;
+    }
+
+    if (simulation.users.some((u) => u.id === newUser.id)) {
+      alert('User ID already exists');
+      return;
+    }
+
     const user: CryptoUser = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: newUser.id,
       username: newUser.username,
       walletAddress:
         '0x' +
@@ -58,41 +71,39 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
           Math.floor(Math.random() * 16).toString(16)
         ).join(''),
       balances: {
-        BTC: newUser.btc,
-        ETH: newUser.eth,
-        USDT: newUser.usdt,
+        BTC: newUser.btc || 0,
+        ETH: newUser.eth || 0,
+        USDT: newUser.usdt || 0,
       },
       transactions: [],
     };
-
 
     onUpdateSimulation({
       ...simulation,
       users: [...simulation.users, user],
     });
 
-
-    setNewUser({ username: '', btc: 0, eth: 0, usdt: 0 });
+    setNewUser({ id: '', username: '', btc: 0, eth: 0, usdt: 0 });
     setShowAddUser(false);
   };
-
 
   const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
     const fromUser = simulation.users.find(
       (u) => u.id === transferData.fromUserId
-    ) as CryptoUser;
+    ) as CryptoUser | undefined;
     const toUser = simulation.users.find(
       (u) => u.id === transferData.toUserId
-    ) as CryptoUser;
+    ) as CryptoUser | undefined;
 
-
-    if (!fromUser || !toUser) return;
+    if (!fromUser || !toUser) {
+      alert('Select both users');
+      return;
+    }
     if ((fromUser.balances[transferData.coin] || 0) < transferData.amount) {
       alert('Insufficient funds');
       return;
     }
-
 
     const transaction = {
       id: Math.random().toString(36).substr(2, 9),
@@ -105,24 +116,22 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       status: 'success' as const,
     };
 
-
     fromUser.balances[transferData.coin] -= transferData.amount;
     toUser.balances[transferData.coin] =
       (toUser.balances[transferData.coin] || 0) + transferData.amount;
     fromUser.transactions.push(transaction);
     toUser.transactions.push(transaction);
 
-
     onUpdateSimulation({ ...simulation });
     setTransferData({ fromUserId: '', toUserId: '', amount: 0, coin: 'BTC' });
     setShowTransfer(false);
   };
 
-
   const handleDeposit = (userId: string, amount: number, coin: CryptoType) => {
-    const user = simulation.users.find((u) => u.id === userId) as CryptoUser;
+    const user = simulation.users.find((u) => u.id === userId) as
+      | CryptoUser
+      | undefined;
     if (!user) return;
-
 
     const transaction = {
       id: Math.random().toString(36).substr(2, 9),
@@ -134,20 +143,19 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       status: 'success' as const,
     };
 
-
     user.balances[coin] = (user.balances[coin] || 0) + amount;
     user.transactions.push(transaction);
     onUpdateSimulation({ ...simulation });
   };
 
-
   const handleWithdraw = (userId: string, amount: number, coin: CryptoType) => {
-    const user = simulation.users.find((u) => u.id === userId) as CryptoUser;
+    const user = simulation.users.find((u) => u.id === userId) as
+      | CryptoUser
+      | undefined;
     if (!user || (user.balances[coin] || 0) < amount) {
       alert('Insufficient funds');
       return;
     }
-
 
     const transaction = {
       id: Math.random().toString(36).substr(2, 9),
@@ -159,19 +167,16 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       status: 'success' as const,
     };
 
-
     user.balances[coin] -= amount;
     user.transactions.push(transaction);
     onUpdateSimulation({ ...simulation });
   };
-
 
   const coinColors: Record<CryptoType, string> = {
     BTC: 'text-accent-crypto',
     ETH: 'text-accent-info',
     USDT: 'text-accent-success',
   };
-
 
   return (
     <div className="min-h-screen bg-neutral-900 p-8">
@@ -204,7 +209,6 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
               <p className="mt-1 text-neutral-400">{simulation.provider}</p>
             </div>
           </div>
-
 
           <div className="flex gap-3">
             <button
@@ -241,7 +245,6 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
           </div>
         </div>
 
-
         {/* API Key Display */}
         {showAPIKey && (
           <div className="mb-6 rounded-lg border border-neutral-700 bg-neutral-800 p-4">
@@ -265,14 +268,13 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
           </div>
         )}
 
-
         {!selectedUser ? (
           <div>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-neutral-100">
                 Users ({simulation.users.length})
               </h2>
-              <p className="text-sm  text-neutral-100">
+              <p className="text-sm text-neutral-100">
                 Click on a user to view details
               </p>
             </div>
@@ -284,20 +286,64 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                   (cryptoUser.balances.ETH || 0) * 3000 +
                   (cryptoUser.balances.USDT || 0);
 
-
                 return (
                   <div
                     key={user.id}
                     onClick={() => setSelectedUserId(user.id)}
-                    className="cursor-pointer rounded-lg border-2 border-neutral-700 bg-neutral-800 p-5 transition-all hover:border-neutral-600 hover:bg-neutral-750"
+                    className="hover:bg-neutral-750 cursor-pointer rounded-lg border-2 border-neutral-700 bg-neutral-800 p-5 transition-all hover:border-neutral-600"
                   >
                     <h3 className="mb-2 text-lg font-bold text-neutral-100">
                       {cryptoUser.username}
                     </h3>
-                    <p className="mb-4 font-mono text-xs break-all text-neutral-400">
-                      {cryptoUser.walletAddress}
-                    </p>
-                    <div className="space-y-2">
+                    <div className="group mb-1 flex items-center gap-2">
+                      <p className="font-mono text-xs text-neutral-400">
+                        ID: {cryptoUser.id}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(cryptoUser.id);
+                          setCopiedId(`id-${cryptoUser.id}`);
+                          setTimeout(() => setCopiedId(null), 2000);
+                        }}
+                        className={`text-xs opacity-0 transition-all group-hover:opacity-100 ${
+                          copiedId === `id-${cryptoUser.id}`
+                            ? 'text-accent-success'
+                            : 'text-neutral-500 hover:text-neutral-300'
+                        }`}
+                      >
+                        {copiedId === `id-${cryptoUser.id}`
+                          ? '✓ Copied'
+                          : 'Copy'}
+                      </button>
+                    </div>
+                    <div className="group flex items-center gap-2">
+                      <p className="font-mono text-xs text-neutral-400">
+                        <p className="font-mono text-xs text-neutral-400">
+                          Address: {shortenAddress(cryptoUser.walletAddress)}
+                        </p>
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(
+                            cryptoUser.walletAddress
+                          );
+                          setCopiedId(`wallet-${cryptoUser.id}`);
+                          setTimeout(() => setCopiedId(null), 2000);
+                        }}
+                        className={`text-xs opacity-0 transition-all group-hover:opacity-100 ${
+                          copiedId === `wallet-${cryptoUser.id}`
+                            ? 'text-accent-success'
+                            : 'text-neutral-500 hover:text-neutral-300'
+                        }`}
+                      >
+                        {copiedId === `wallet-${cryptoUser.id}`
+                          ? '✓ Copied'
+                          : 'Copy'}
+                      </button>
+                    </div>
+                    <div className="mt-6 space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-400">BTC:</span>
                         <span className={coinColors.BTC}>
@@ -357,28 +403,92 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                       <p className="font-medium text-neutral-100">
                         {cryptoUser.username}
                       </p>
-                      <p className="mt-1 font-mono text-xs text-neutral-400">
-                        {cryptoUser.walletAddress.slice(0, 12)}...
-                      </p>
+                      <div className="group mt-1 flex items-center gap-2">
+                        <p className="font-mono text-xs text-neutral-400">
+                          ID: {cryptoUser.id}
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(cryptoUser.id);
+                            setCopiedId(`sidebar-id-${cryptoUser.id}`);
+                            setTimeout(() => setCopiedId(null), 2000);
+                          }}
+                          className={`text-xs opacity-0 transition-all group-hover:opacity-100 ${
+                            copiedId === `sidebar-id-${cryptoUser.id}`
+                              ? 'text-accent-success'
+                              : 'text-neutral-500 hover:text-neutral-300'
+                          }`}
+                        >
+                          {copiedId === `sidebar-id-${cryptoUser.id}`
+                            ? '✓ Copied'
+                            : 'Copy'}
+                        </button>
+                      </div>
+                      <div className="group flex items-center gap-2">
+                        <p className="font-mono text-xs text-neutral-400">
+                          <p className="font-mono text-xs text-neutral-400">
+                            Address: {shortenAddress(cryptoUser.walletAddress)}
+                          </p>
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(
+                              cryptoUser.walletAddress
+                            );
+                            setCopiedId(`wallet-${cryptoUser.id}`);
+                            setTimeout(() => setCopiedId(null), 2000);
+                          }}
+                          className={`text-xs opacity-0 transition-all group-hover:opacity-100 ${
+                            copiedId === `wallet-${cryptoUser.id}`
+                              ? 'text-accent-success'
+                              : 'text-neutral-500 hover:text-neutral-300'
+                          }`}
+                        >
+                          {copiedId === `wallet-${cryptoUser.id}`
+                            ? '✓ Copied'
+                            : 'Copy'}
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-
             {/* User Details */}
             <div className="lg:col-span-9">
               <div className="rounded-lg border border-neutral-700 bg-neutral-800 p-6">
                 <div className="mb-6">
                   <h2 className="mb-1 text-2xl font-bold text-neutral-100">
-                    {selectedUser.username}
+                    {selectedUser!.username}
                   </h2>
+                  <div className="group mb-1 flex items-center gap-2">
+                    <p className="font-mono text-sm text-neutral-400">
+                      ID: {selectedUser!.id}
+                    </p>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedUser!.id);
+                        setCopiedId(`detail-id-${selectedUser!.id}`);
+                        setTimeout(() => setCopiedId(null), 2000);
+                      }}
+                      className={`text-xs opacity-0 transition-all group-hover:opacity-100 ${
+                        copiedId === `detail-id-${selectedUser!.id}`
+                          ? 'text-accent-success'
+                          : 'text-neutral-500 hover:text-neutral-300'
+                      }`}
+                    >
+                      {copiedId === `detail-id-${selectedUser!.id}`
+                        ? '✓ Copied'
+                        : 'Copy'}
+                    </button>
+                  </div>
                   <p className="font-mono text-sm break-all text-neutral-400">
-                    {selectedUser.walletAddress}
+                    {selectedUser!.walletAddress}
                   </p>
                 </div>
-
 
                 {/* Balances */}
                 <div className="mb-6 grid grid-cols-3 gap-4">
@@ -386,14 +496,13 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     <div key={coin} className="rounded-lg bg-neutral-700 p-4">
                       <p className="mb-1 text-sm text-neutral-400">{coin}</p>
                       <p className={`text-2xl font-bold ${coinColors[coin]}`}>
-                        {(selectedUser.balances[coin] || 0).toFixed(
+                        {(selectedUser!.balances[coin] || 0).toFixed(
                           coin === 'USDT' ? 2 : 6
                         )}
                       </p>
                     </div>
                   ))}
                 </div>
-
 
                 {/* Quick Actions */}
                 <div className="mb-6 grid grid-cols-3 gap-3">
@@ -421,19 +530,19 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                   ))}
                 </div>
 
-
                 {/* Transactions */}
                 <div>
                   <h3 className="mb-4 text-lg font-bold text-neutral-100">
                     Transaction History
                   </h3>
-                  {selectedUser.transactions.length === 0 ? (
+                  {selectedUser!.transactions.length === 0 ? (
                     <p className="py-8 text-center text-neutral-500">
                       No transactions yet
                     </p>
                   ) : (
                     <div className="max-h-96 space-y-3 overflow-y-auto">
-                      {selectedUser.transactions
+                      {selectedUser!.transactions
+                        .slice()
                         .sort(
                           (a, b) =>
                             b.timestamp.getTime() - a.timestamp.getTime()
@@ -452,14 +561,14 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                                   className={`text-lg font-bold ${
                                     tx.type === 'deposit' ||
                                     (tx.type === 'transfer' &&
-                                      tx.to === selectedUser.walletAddress)
+                                      tx.to === selectedUser!.walletAddress)
                                       ? 'text-accent-success'
                                       : 'text-accent-error'
                                   }`}
                                 >
                                   {tx.type === 'deposit' ||
                                   (tx.type === 'transfer' &&
-                                    tx.to === selectedUser.walletAddress)
+                                    tx.to === selectedUser!.walletAddress)
                                     ? '+'
                                     : '-'}
                                   {tx.amount} {tx.currency}
@@ -489,9 +598,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
           </div>
         )}
 
-
         {/* --- Modals --- */}
-
 
         {/* Add User Modal */}
         {showAddUser && (
@@ -502,6 +609,21 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
               </h3>
               <form onSubmit={handleAddUser}>
                 <div className="mb-6 space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-neutral-300">
+                      User ID
+                    </label>
+                    <input
+                      type="text"
+                      value={newUser.id}
+                      onChange={(e) =>
+                        setNewUser({ ...newUser, id: e.target.value })
+                      }
+                      className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
+                      placeholder="e.g., user123"
+                      required
+                    />
+                  </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-neutral-300">
                       Username
@@ -527,7 +649,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
-                          btc: parseFloat(e.target.value),
+                          btc: parseFloat(e.target.value) || 0,
                         })
                       }
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
@@ -544,7 +666,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
-                          eth: parseFloat(e.target.value),
+                          eth: parseFloat(e.target.value) || 0,
                         })
                       }
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
@@ -561,7 +683,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
-                          usdt: parseFloat(e.target.value),
+                          usdt: parseFloat(e.target.value) || 0,
                         })
                       }
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
@@ -588,6 +710,113 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
           </div>
         )}
 
+        {/* Deposit Modal */}
+        {showDeposit && selectedUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-800 p-6">
+              <h3 className="mb-4 text-xl font-bold text-neutral-100">
+                Deposit {transactionCoin}
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleDeposit(
+                    selectedUser.id,
+                    transactionAmount,
+                    transactionCoin
+                  );
+                  setShowDeposit(false);
+                  setTransactionAmount(0);
+                }}
+              >
+                <div className="mb-6">
+                  <label className="mb-2 block text-sm font-medium text-neutral-300">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
+                    value={transactionAmount}
+                    onChange={(e) =>
+                      setTransactionAmount(parseFloat(e.target.value) || 0)
+                    }
+                    className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeposit(false)}
+                    className="flex-1 rounded-lg bg-neutral-700 px-4 py-3 font-medium text-neutral-300 transition-all hover:bg-neutral-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-accent-success hover:bg-accent-success/90 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Withdraw Modal */}
+        {showWithdraw && selectedUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-800 p-6">
+              <h3 className="mb-4 text-xl font-bold text-neutral-100">
+                Withdraw {transactionCoin}
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleWithdraw(
+                    selectedUser.id,
+                    transactionAmount,
+                    transactionCoin
+                  );
+                  setShowWithdraw(false);
+                  setTransactionAmount(0);
+                }}
+              >
+                <div className="mb-6">
+                  <label className="mb-2 block text-sm font-medium text-neutral-300">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
+                    value={transactionAmount}
+                    onChange={(e) =>
+                      setTransactionAmount(parseFloat(e.target.value) || 0)
+                    }
+                    className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowWithdraw(false)}
+                    className="flex-1 rounded-lg bg-neutral-700 px-4 py-3 font-medium text-neutral-300 transition-all hover:bg-neutral-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-accent-warning hover:bg-accent-warning/90 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Transfer Modal */}
         {showTransfer && (
@@ -681,7 +910,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                       onChange={(e) =>
                         setTransferData({
                           ...transferData,
-                          amount: parseFloat(e.target.value),
+                          amount: parseFloat(e.target.value) || 0,
                         })
                       }
                       className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
@@ -701,108 +930,6 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     type="submit"
                     className="bg-primary-700 hover:bg-primary-600 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
                   >
-                    Transfer
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-
-        {/* Deposit Modal */}
-        {showDeposit && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-800 p-6">
-              <h3 className="mb-4 text-xl font-bold text-neutral-100">
-                Deposit {transactionCoin}
-              </h3>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleDeposit(selectedUser.id, transactionAmount, transactionCoin);
-                  setShowDeposit(false);
-                  setTransactionAmount(0);
-                }}
-              >
-                <div className="mb-6">
-                  <label className="mb-2 block text-sm font-medium text-neutral-300">
-                    Amount
-                  </label>
-                  <input
-                    type="number"
-                    step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
-                    value={transactionAmount}
-                    onChange={(e) =>
-                      setTransactionAmount(parseFloat(e.target.value))
-                    }
-                    className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowDeposit(false)}
-                    className="flex-1 rounded-lg bg-neutral-700 px-4 py-3 font-medium text-neutral-300 transition-all hover:bg-neutral-600"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-accent-success hover:bg-accent-success/90 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
-                  >
-                    Confirm
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-
-        {/* Withdraw Modal */}
-        {showWithdraw && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-800 p-6">
-              <h3 className="mb-4 text-xl font-bold text-neutral-100">
-                Withdraw {transactionCoin}
-              </h3>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleWithdraw(selectedUser.id, transactionAmount, transactionCoin);
-                  setShowWithdraw(false);
-                  setTransactionAmount(0);
-                }}
-              >
-                <div className="mb-6">
-                  <label className="mb-2 block text-sm font-medium text-neutral-300">
-                    Amount
-                  </label>
-                  <input
-                    type="number"
-                    step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
-                    value={transactionAmount}
-                    onChange={(e) =>
-                      setTransactionAmount(parseFloat(e.target.value))
-                    }
-                    className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowWithdraw(false)}
-                    className="flex-1 rounded-lg bg-neutral-700 px-4 py-3 font-medium text-neutral-300 transition-all hover:bg-neutral-600"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-accent-warning hover:bg-accent-warning/90 flex-1 rounded-lg px-4 py-3 font-medium text-white transition-all"
-                  >
                     Confirm
                   </button>
                 </div>
@@ -814,3 +941,5 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
     </div>
   );
 };
+
+export default CryptoSimulationPage;

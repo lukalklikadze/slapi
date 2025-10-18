@@ -344,9 +344,15 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                           : 'border-neutral-700 hover:border-neutral-600'
                       }`}
                     >
-                      <p className="font-medium text-neutral-100">
-                        {bankUser.username}
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-neutral-100">
+                          {bankUser.username}
+                        </p>
+                        <p className="text-accent-success font-semibold">
+                          {formatCurrency(bankUser.balance, bankUser.currency)}
+                        </p>
+                      </div>
+
                       <div className="group mt-1 flex items-center gap-2">
                         <p className="font-mono text-xs text-neutral-400">
                           ID: {bankUser.id}
@@ -369,6 +375,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                             : 'Copy'}
                         </button>
                       </div>
+
                       <div className="group flex items-center gap-2">
                         <p className="font-mono text-xs text-neutral-400">
                           Account: {bankUser.accountNumber}
