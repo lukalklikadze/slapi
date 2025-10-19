@@ -176,7 +176,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 p-8">
+    <div className="min-h-screen bg-transparent p-8">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">

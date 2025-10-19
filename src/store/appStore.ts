@@ -1,5 +1,10 @@
 // store/appStore.ts
-import type { Simulation, APIRequest, Environment } from '../types';
+import type {
+  Simulation,
+  APIRequest,
+  Environment,
+  CustomAPIDefinition,
+} from '../types';
 
 export interface AppState {
   isAuthenticated: boolean;
@@ -9,6 +14,7 @@ export interface AppState {
   simulations: Simulation[];
   currentSimulation: Simulation | null;
   apiRequests: APIRequest[];
+  currentCustomDefinition: CustomAPIDefinition | null;
 }
 
 export const initialState: AppState = {
@@ -19,6 +25,7 @@ export const initialState: AppState = {
   simulations: [],
   currentSimulation: null,
   apiRequests: [],
+  currentCustomDefinition: null,
 };
 
 // Store actions
@@ -31,7 +38,9 @@ export type AppAction =
   | { type: 'UPDATE_SIMULATION'; simulation: Simulation }
   | { type: 'SELECT_SIMULATION'; simulation: Simulation }
   | { type: 'DELETE_SIMULATION'; id: string }
-  | { type: 'ADD_API_REQUEST'; request: APIRequest };
+  | { type: 'ADD_API_REQUEST'; request: APIRequest }
+  | { type: 'SET_CUSTOM_DEFINITION'; customDefinition: CustomAPIDefinition }
+  | { type: 'SET_SIMULATIONS'; simulations: Simulation[] };
 
 export const appReducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
@@ -79,6 +88,16 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
       return {
         ...state,
         apiRequests: [action.request, ...state.apiRequests],
+      };
+    case 'SET_CUSTOM_DEFINITION':
+      return {
+        ...state,
+        currentCustomDefinition: action.customDefinition,
+      };
+    case 'SET_SIMULATIONS':
+      return {
+        ...state,
+        simulations: action.simulations,
       };
     default:
       return state;

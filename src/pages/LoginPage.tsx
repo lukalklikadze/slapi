@@ -12,7 +12,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-900 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-transparent p-4">
       <div className="w-full max-w-md rounded-lg border border-neutral-700 bg-neutral-800 p-8 shadow-[0_8px_24px_rgba(15,23,42,0.16)]">
         <div className="mb-8 text-center">
           <div className="mb-4 inline-block">
