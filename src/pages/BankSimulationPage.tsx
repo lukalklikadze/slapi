@@ -37,7 +37,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
   const [newUser, setNewUser] = useState({
     id: '',
     username: '',
-    balance: 0,
+    balance: '' as number | '',
     currency: 'USD' as Currency,
   });
 
@@ -69,7 +69,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
       accountNumber: Array.from({ length: 16 }, () =>
         Math.floor(Math.random() * 10)
       ).join(''),
-      balance: newUser.balance,
+      balance: typeof newUser.balance === 'number' ? newUser.balance : 0,
       currency: newUser.currency,
       transactions: [],
     };
@@ -79,7 +79,7 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
       users: [...simulation.users, user],
     });
 
-    setNewUser({ id: '', username: '', balance: 0, currency: 'USD' });
+    setNewUser({ id: '', username: '', balance: '', currency: 'USD' });
     setShowAddUser(false);
   };
 
@@ -627,11 +627,11 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
                     </label>
                     <input
                       type="number"
-                      value={newUser.balance || ''}
+                      value={newUser.balance}
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
-                          balance: parseFloat(e.target.value) || 0,
+                          balance: e.target.value === '' ? '' : parseFloat(e.target.value) || 0,
                         })
                       }
                       placeholder="0.00"

@@ -22,7 +22,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [transactionCoin, setTransactionCoin] = useState<CryptoType>('BTC');
-  const [transactionAmount, setTransactionAmount] = useState(0);
+  const [transactionAmount, setTransactionAmount] = useState<number | ''>('');
 
   const [errorModal, setErrorModal] = useState<{
     show: boolean;
@@ -37,9 +37,9 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
   const [newUser, setNewUser] = useState({
     id: '',
     username: '',
-    btc: 0,
-    eth: 0,
-    usdt: 0,
+    btc: '' as number | '',
+    eth: '' as number | '',
+    usdt: '' as number | '',
   });
 
   const shortenAddress = (address: string, chars = 6) => {
@@ -50,7 +50,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
   const [transferData, setTransferData] = useState({
     fromUserId: '',
     toUserId: '',
-    amount: 0,
+    amount: '' as number | '',
     coin: 'BTC' as CryptoType,
   });
 
@@ -87,9 +87,9 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
           Math.floor(Math.random() * 16).toString(16)
         ).join(''),
       balances: {
-        BTC: newUser.btc || 0,
-        ETH: newUser.eth || 0,
-        USDT: newUser.usdt || 0,
+        BTC: typeof newUser.btc === 'number' ? newUser.btc : 0,
+        ETH: typeof newUser.eth === 'number' ? newUser.eth : 0,
+        USDT: typeof newUser.usdt === 'number' ? newUser.usdt : 0,
       },
       transactions: [],
     };
@@ -99,7 +99,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       users: [...simulation.users, user],
     });
 
-    setNewUser({ id: '', username: '', btc: 0, eth: 0, usdt: 0 });
+    setNewUser({ id: '', username: '', btc: '', eth: '', usdt: '' });
     setShowAddUser(false);
   };
 
@@ -116,7 +116,10 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       showError('Invalid Selection', 'Please select both from and to users.');
       return;
     }
-    if ((fromUser.balances[transferData.coin] || 0) < transferData.amount) {
+    
+    const amount = typeof transferData.amount === 'number' ? transferData.amount : 0;
+    
+    if ((fromUser.balances[transferData.coin] || 0) < amount) {
       showError(
         'Insufficient Funds',
         `${fromUser.username} has ${(fromUser.balances[transferData.coin] || 0).toFixed(6)} ${transferData.coin} available.`
@@ -127,7 +130,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
     const transaction = {
       id: Math.random().toString(36).substr(2, 9),
       type: 'transfer' as const,
-      amount: transferData.amount,
+      amount: amount,
       currency: transferData.coin,
       from: fromUser.walletAddress,
       to: toUser.walletAddress,
@@ -135,14 +138,14 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
       status: 'success' as const,
     };
 
-    fromUser.balances[transferData.coin] -= transferData.amount;
+    fromUser.balances[transferData.coin] -= amount;
     toUser.balances[transferData.coin] =
-      (toUser.balances[transferData.coin] || 0) + transferData.amount;
+      (toUser.balances[transferData.coin] || 0) + amount;
     fromUser.transactions.push(transaction);
     toUser.transactions.push(transaction);
 
     onUpdateSimulation({ ...simulation });
-    setTransferData({ fromUserId: '', toUserId: '', amount: 0, coin: 'BTC' });
+    setTransferData({ fromUserId: '', toUserId: '', amount: '', coin: 'BTC' });
     setShowTransfer(false);
   };
 
@@ -346,9 +349,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     </div>
                     <div className="group flex items-center gap-2">
                       <p className="font-mono text-xs text-neutral-400">
-                        <p className="font-mono text-xs text-neutral-400">
-                          Address: {shortenAddress(cryptoUser.walletAddress)}
-                        </p>
+                        Address: {shortenAddress(cryptoUser.walletAddress)}
                       </p>
                       <button
                         onClick={(e) => {
@@ -454,9 +455,7 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                       </div>
                       <div className="group flex items-center gap-2">
                         <p className="font-mono text-xs text-neutral-400">
-                          <p className="font-mono text-xs text-neutral-400">
-                            Address: {shortenAddress(cryptoUser.walletAddress)}
-                          </p>
+                          Address: {shortenAddress(cryptoUser.walletAddress)}
                         </p>
                         <button
                           onClick={(e) => {
@@ -672,11 +671,11 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     <input
                       type="number"
                       step="0.000001"
-                      value={newUser.btc || ''}
+                      value={newUser.btc}
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
-                          btc: parseFloat(e.target.value) || 0,
+                          btc: e.target.value === '' ? '' : parseFloat(e.target.value) || 0,
                         })
                       }
                       placeholder="0.00"
@@ -690,11 +689,11 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     <input
                       type="number"
                       step="0.000001"
-                      value={newUser.eth || ''}
+                      value={newUser.eth}
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
-                          eth: parseFloat(e.target.value) || 0,
+                          eth: e.target.value === '' ? '' : parseFloat(e.target.value) || 0,
                         })
                       }
                       placeholder="0.00"
@@ -708,11 +707,11 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     <input
                       type="number"
                       step="0.01"
-                      value={newUser.usdt || ''}
+                      value={newUser.usdt}
                       onChange={(e) =>
                         setNewUser({
                           ...newUser,
-                          usdt: parseFloat(e.target.value) || 0,
+                          usdt: e.target.value === '' ? '' : parseFloat(e.target.value) || 0,
                         })
                       }
                       placeholder="0.00"
@@ -750,13 +749,14 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  const amount = typeof transactionAmount === 'number' ? transactionAmount : 0;
                   handleDeposit(
                     selectedUser.id,
-                    transactionAmount,
+                    amount,
                     transactionCoin
                   );
                   setShowDeposit(false);
-                  setTransactionAmount(0);
+                  setTransactionAmount('');
                 }}
               >
                 <div className="mb-6">
@@ -766,9 +766,9 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                   <input
                     type="number"
                     step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
-                    value={transactionAmount || ''}
+                    value={transactionAmount}
                     onChange={(e) =>
-                      setTransactionAmount(parseFloat(e.target.value) || 0)
+                      setTransactionAmount(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)
                     }
                     placeholder="0.00"
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
@@ -805,13 +805,14 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  const amount = typeof transactionAmount === 'number' ? transactionAmount : 0;
                   handleWithdraw(
                     selectedUser.id,
-                    transactionAmount,
+                    amount,
                     transactionCoin
                   );
                   setShowWithdraw(false);
-                  setTransactionAmount(0);
+                  setTransactionAmount('');
                 }}
               >
                 <div className="mb-6">
@@ -821,9 +822,9 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                   <input
                     type="number"
                     step={transactionCoin === 'USDT' ? '0.01' : '0.000001'}
-                    value={transactionAmount || ''}
+                    value={transactionAmount}
                     onChange={(e) =>
-                      setTransactionAmount(parseFloat(e.target.value) || 0)
+                      setTransactionAmount(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)
                     }
                     placeholder="0.00"
                     className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-3 text-neutral-100 focus:outline-none"
@@ -938,11 +939,11 @@ export const CryptoSimulationPage: React.FC<CryptoSimulationPageProps> = ({
                     <input
                       type="number"
                       step="0.000001"
-                      value={transferData.amount || ''}
+                      value={transferData.amount}
                       onChange={(e) =>
                         setTransferData({
                           ...transferData,
-                          amount: parseFloat(e.target.value) || 0,
+                          amount: e.target.value === '' ? '' : parseFloat(e.target.value) || 0,
                         })
                       }
                       placeholder="0.00"
