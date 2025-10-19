@@ -16,17 +16,13 @@ export const FloatingBackground: React.FC = () => {
 
   useEffect(() => {
     const currencySymbols = ['$', '€', '₿', '¥', '£', '₹', '₽'];
-
-    // ↓ Reduced density (fewer total symbols)
-    const baseCount = Math.floor(window.innerWidth / 50); // one roughly every 50px width
+    const baseCount = Math.floor(window.innerWidth / 50);
     const symbolCount = Math.min(Math.max(baseCount, 20), 70);
 
     const newSymbols: FloatingSymbol[] = [];
 
-    // Half from top, half from left
     for (let i = 0; i < symbolCount; i++) {
       const fromTop = i < symbolCount / 2;
-
       newSymbols.push({
         id: i,
         symbol:
@@ -36,8 +32,7 @@ export const FloatingBackground: React.FC = () => {
         duration: 18 + Math.random() * 15,
         delay: Math.random() * 20,
         opacity: 0.1 + Math.random() * 0.3,
-        // ↑ Increased size range significantly
-        size: 2.5 + Math.random() * 3.5, // 2.5rem–6rem
+        size: 2.5 + Math.random() * 3.5,
       });
     }
 
@@ -46,17 +41,20 @@ export const FloatingBackground: React.FC = () => {
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden">
+    <div
+      className="pointer-events-none fixed inset-0 overflow-hidden"
+      style={{ zIndex: 0 }}
+    >
       <style>{`
         @keyframes diagonal-flow {
           0% {
             transform: translate(0, 0) rotate(0deg);
             opacity: 0;
           }
-          10% {
+          5% {
             opacity: var(--opacity);
           }
-          90% {
+          95% {
             opacity: var(--opacity);
           }
           100% {
@@ -64,7 +62,6 @@ export const FloatingBackground: React.FC = () => {
             opacity: 0;
           }
         }
-
         .floating-symbol {
           position: fixed;
           font-weight: bold;
@@ -75,9 +72,9 @@ export const FloatingBackground: React.FC = () => {
           will-change: transform, opacity;
           pointer-events: none;
           user-select: none;
+          z-index: 0;
         }
       `}</style>
-
       {symbols.map((symbol) => (
         <div
           key={symbol.id}

@@ -56,3 +56,37 @@ export interface APIResponse {
   error?: string;
   timestamp: Date;
 }
+
+export interface APIEndpoint {
+  name: string;
+  path: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  description: string;
+  requestBody?: {
+    [key: string]: string; // fieldName: type
+  };
+  responseBody?: any;
+}
+
+export interface CustomAPIDefinition {
+  id: string;
+  name: string;
+  type: Environment;
+  description: string;
+  endpoints: APIEndpoint[];
+  userSchema: {
+    idField: string;
+    balanceFields: string[];
+    identifierField: string; // account number or wallet address
+  };
+}
+
+export interface EnvironmentConfig {
+  type: Environment;
+  provider: string;
+  icon: string;
+  description: string;
+  features: string[];
+  isCustom: boolean;
+  customDefinition?: CustomAPIDefinition;
+}

@@ -40,7 +40,7 @@ export const SimulationsPage: React.FC<SimulationsPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 p-8">
+    <div className="min-h-screen bg-transparent p-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">

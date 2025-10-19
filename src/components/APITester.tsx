@@ -1,7 +1,7 @@
-// components/APITester.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import type { APIRequest, Simulation } from '../types';
 import { apiSimulator } from '../services/api';
+import { customAPISimulator } from '../services/customApiSimulator';
 import { formatDate } from '../utils/helpers';
 
 interface APITesterProps {
@@ -26,7 +26,7 @@ export const APITester: React.FC<APITesterProps> = ({
   const [isSending, setIsSending] = useState(false);
 
   // Static endpoint presets
-  const endpoints = useMemo(() => {
+  const baseEndpoints = useMemo(() => {
     const bank: EndpointPreset[] = [
       {
         value: '/api/bank/balance',
@@ -74,19 +74,115 @@ export const APITester: React.FC<APITesterProps> = ({
     return { bank, crypto };
   }, []);
 
-  // figure out selected simulation & provider
+  // Get selected simulation
   const selectedSim = useMemo(
     () => simulations.find((s) => s.apiKey === apiKey),
     [simulations, apiKey]
   );
+
+  // Get custom definition if applicable
+  const customDef = useMemo(() => {
+    if (!selectedSim) {
+      console.log('❌ No selectedSim');
+      return null;
+    }
+    const def = customAPISimulator.getCustomDefinition(selectedSim.provider);
+    console.log('🔍 Looking for custom def:', {
+      provider: selectedSim.provider,
+      found: !!def,
+      definition: def,
+    });
+    return def;
+  }, [selectedSim]);
+
   const provider = (selectedSim?.provider || '').toLowerCase();
 
-  // compute which presets are visible based on provider
+  // Combine base + custom endpoints
+  const allEndpoints = useMemo(() => {
+    const endpoints = { ...baseEndpoints };
+
+    console.log('📦 HARDCODED Endpoints:', {
+      bank: endpoints.bank.map((e) => e.value),
+      crypto: endpoints.crypto.map((e) => e.value),
+    });
+
+    if (customDef) {
+      const customPresets: EndpointPreset[] = customDef.endpoints.map((ep) => ({
+        value: ep.path,
+        method: ep.method as 'GET' | 'POST',
+        body: JSON.stringify(
+          Object.keys(ep.requestBody || {}).reduce((acc, key) => {
+            acc[key] = ep.requestBody![key] === 'number' ? 0 : '';
+            return acc;
+          }, {} as any),
+          null,
+          2
+        ),
+      }));
+
+      console.log('✅ PARSED Custom Endpoints:', {
+        name: customDef.name,
+        type: customDef.type,
+        endpoints: customPresets.map((e) => e.value),
+      });
+
+      // ONLY use custom endpoints, don't merge
+      if (customDef.type === 'bank') {
+        endpoints.bank = customPresets;
+      } else {
+        endpoints.crypto = customPresets;
+      }
+
+      console.log('🔄 FINAL allEndpoints (custom replaced):', {
+        bank: endpoints.bank.map((e) => e.value),
+        crypto: endpoints.crypto.map((e) => e.value),
+      });
+    }
+
+    return endpoints;
+  }, [baseEndpoints, customDef]);
+
+  // Compute which presets are visible based on provider
   const visiblePresets = useMemo<EndpointPreset[]>(() => {
-    if (provider.includes('tbc')) return endpoints.bank;
-    if (provider.includes('hinkal')) return endpoints.crypto;
-    return [...endpoints.bank, ...endpoints.crypto];
-  }, [provider, endpoints]);
+    // If custom definition, show only its endpoints
+    if (customDef) {
+      const result =
+        customDef.type === 'bank' ? allEndpoints.bank : allEndpoints.crypto;
+
+      console.log('👁️ DISPLAYED Endpoints (custom):', {
+        provider: selectedSim?.provider,
+        customType: customDef.type,
+        endpoints: result.map((e) => e.value),
+      });
+
+      return result;
+    }
+
+    // Otherwise, show based on provider
+    let result: EndpointPreset[] = [];
+
+    if (provider.includes('tbc')) {
+      result = allEndpoints.bank;
+      console.log(
+        '👁️ DISPLAYED Endpoints (TBC):',
+        result.map((e) => e.value)
+      );
+    } else if (provider.includes('hinkal')) {
+      result = allEndpoints.crypto;
+      console.log(
+        '👁️ DISPLAYED Endpoints (Hinkal):',
+        result.map((e) => e.value)
+      );
+    } else {
+      result = [...allEndpoints.bank, ...allEndpoints.crypto];
+      console.log(
+        '👁️ DISPLAYED Endpoints (all):',
+        result.map((e) => e.value)
+      );
+    }
+
+    return result;
+  }, [provider, allEndpoints, customDef, selectedSim?.provider]);
 
   // current preset (from visible list)
   const currentPreset = useMemo(
@@ -152,43 +248,67 @@ export const APITester: React.FC<APITesterProps> = ({
       let response: any;
       let status = 200;
 
-      if (endpoint === '/api/bank/balance') {
-        response = await apiSimulator.getBalance(apiKey, body.userId);
-      } else if (endpoint === '/api/bank/transfer') {
-        response = await apiSimulator.transfer(
-          apiKey,
-          body.fromUserId,
-          body.toUserId,
-          body.amount
+      // Check if this is a custom endpoint
+      const isCustomEndpoint = customDef?.endpoints.some(
+        (ep) => ep.path === endpoint
+      );
+
+      if (isCustomEndpoint && customDef) {
+        const customEndpoint = customDef.endpoints.find(
+          (ep) => ep.path === endpoint
         );
-      } else if (endpoint === '/api/bank/deposit') {
-        response = await apiSimulator.deposit(apiKey, body.userId, body.amount);
-      } else if (endpoint === '/api/bank/withdraw') {
-        response = await apiSimulator.withdraw(
-          apiKey,
-          body.userId,
-          body.amount
-        );
-      } else if (endpoint === '/api/bank/transactions') {
-        response = await apiSimulator.getTransactionHistory(
-          apiKey,
-          body.userId
-        );
-      } else if (endpoint === '/api/crypto/balance') {
-        response = await apiSimulator.getCryptoBalance(apiKey, body.userId);
-      } else if (endpoint === '/api/crypto/transfer') {
-        response = await apiSimulator.cryptoTransfer(
-          apiKey,
-          body.fromUserId,
-          body.toUserId,
-          body.amount,
-          body.coin
-        );
-      } else if (endpoint === '/api/crypto/transactions') {
-        response = await apiSimulator.getTransactionHistory(
-          apiKey,
-          body.userId
-        );
+        if (customEndpoint) {
+          response = await customAPISimulator.executeCustomEndpoint(
+            customEndpoint,
+            body,
+            apiKey,
+            simulations
+          );
+        }
+      } else {
+        // Handle standard TBC Bank and Hinkal endpoints
+        if (endpoint === '/api/bank/balance') {
+          response = await apiSimulator.getBalance(apiKey, body.userId);
+        } else if (endpoint === '/api/bank/transfer') {
+          response = await apiSimulator.transfer(
+            apiKey,
+            body.fromUserId,
+            body.toUserId,
+            body.amount
+          );
+        } else if (endpoint === '/api/bank/deposit') {
+          response = await apiSimulator.deposit(
+            apiKey,
+            body.userId,
+            body.amount
+          );
+        } else if (endpoint === '/api/bank/withdraw') {
+          response = await apiSimulator.withdraw(
+            apiKey,
+            body.userId,
+            body.amount
+          );
+        } else if (endpoint === '/api/bank/transactions') {
+          response = await apiSimulator.getTransactionHistory(
+            apiKey,
+            body.userId
+          );
+        } else if (endpoint === '/api/crypto/balance') {
+          response = await apiSimulator.getCryptoBalance(apiKey, body.userId);
+        } else if (endpoint === '/api/crypto/transfer') {
+          response = await apiSimulator.cryptoTransfer(
+            apiKey,
+            body.fromUserId,
+            body.toUserId,
+            body.amount,
+            body.coin
+          );
+        } else if (endpoint === '/api/crypto/transactions') {
+          response = await apiSimulator.getTransactionHistory(
+            apiKey,
+            body.userId
+          );
+        }
       }
 
       if (!response?.success) status = 400;
@@ -261,6 +381,11 @@ export const APITester: React.FC<APITesterProps> = ({
           <div className="flex items-center justify-between border-b border-neutral-700 bg-neutral-900 p-4">
             <h3 className="text-lg font-bold text-neutral-100">
               API Request Tester
+              {customDef && (
+                <span className="bg-accent-info/20 text-accent-info ml-2 rounded px-2 py-1 text-xs font-normal">
+                  Custom API: {customDef.name}
+                </span>
+              )}
             </h3>
             <div className="flex items-center gap-2">
               <button
@@ -307,11 +432,23 @@ export const APITester: React.FC<APITesterProps> = ({
                   // eagerly set first endpoint matching the provider for UX
                   const sim = simulations.find((s) => s.apiKey === val);
                   const prov = (sim?.provider || '').toLowerCase();
-                  const list = prov.includes('tbc')
-                    ? endpoints.bank
-                    : prov.includes('hinkal')
-                      ? endpoints.crypto
-                      : [...endpoints.bank, ...endpoints.crypto];
+                  const customD = sim
+                    ? customAPISimulator.getCustomDefinition(sim.provider)
+                    : null;
+
+                  let list: EndpointPreset[];
+                  if (customD) {
+                    list =
+                      customD.type === 'bank'
+                        ? allEndpoints.bank
+                        : allEndpoints.crypto;
+                  } else if (prov.includes('tbc')) {
+                    list = allEndpoints.bank;
+                  } else if (prov.includes('hinkal')) {
+                    list = allEndpoints.crypto;
+                  } else {
+                    list = [...allEndpoints.bank, ...allEndpoints.crypto];
+                  }
 
                   if (list.length) {
                     setEndpoint(list[0].value);
@@ -365,31 +502,11 @@ export const APITester: React.FC<APITesterProps> = ({
                   }}
                   className="focus:border-primary-600 w-full rounded-lg border border-neutral-600 bg-neutral-700 px-4 py-2 text-sm text-neutral-100 focus:outline-none"
                 >
-                  {/* Render only the groups allowed by provider */}
-                  {(!provider ||
-                    (!provider.includes('tbc') &&
-                      !provider.includes('hinkal')) ||
-                    provider.includes('tbc')) && (
-                    <optgroup label="Bank API">
-                      {endpoints.bank.map((ep) => (
-                        <option key={ep.value} value={ep.value}>
-                          {ep.value}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                  {(!provider ||
-                    (!provider.includes('tbc') &&
-                      !provider.includes('hinkal')) ||
-                    provider.includes('hinkal')) && (
-                    <optgroup label="Crypto API">
-                      {endpoints.crypto.map((ep) => (
-                        <option key={ep.value} value={ep.value}>
-                          {ep.value}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
+                  {visiblePresets.map((ep) => (
+                    <option key={ep.value} value={ep.value}>
+                      {ep.value}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
