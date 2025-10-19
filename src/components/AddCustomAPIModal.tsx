@@ -207,7 +207,7 @@ export const AddCustomAPIModal: React.FC<AddCustomAPIModalProps> = ({
                 }}
                 className="group hover:border-accent-crypto rounded-xl border-2 border-neutral-700 bg-neutral-900 p-6 text-left transition-all"
               >
-                <div className="mb-4 text-4xl">₿</div>
+                <div className="mb-4 text-4xl">🪙</div>
                 <h3 className="group-hover:text-accent-crypto mb-2 text-xl font-bold text-neutral-100">
                   Crypto API
                 </h3>

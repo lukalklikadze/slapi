@@ -65,7 +65,7 @@ export const EnvironmentPage: React.FC<EnvironmentPageProps> = ({
   const customEnvironments: EnvironmentConfig[] = customAPIs.map((api) => ({
     type: api.type,
     provider: api.name,
-    icon: api.type === 'bank' ? '🏦' : '₿',
+    icon: api.type === 'bank' ? '🏦' : '🪙',
     description: api.description,
     features: generateFeatures(api.endpoints),
     isCustom: true,
