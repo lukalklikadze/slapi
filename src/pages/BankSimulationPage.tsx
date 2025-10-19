@@ -255,11 +255,16 @@ export const BankSimulationPage: React.FC<BankSimulationPageProps> = ({
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(simulation.apiKey);
-                  alert('API Key copied!');
+                  setCopiedId('api-key');
+                  setTimeout(() => setCopiedId(null), 2000);
                 }}
-                className="rounded-lg bg-neutral-700 px-4 py-2 text-sm text-neutral-300 transition-all hover:bg-neutral-600"
+                className={`rounded-lg px-4 py-2 text-sm transition-all ${
+                  copiedId === 'api-key'
+                    ? 'bg-accent-success text-white'
+                    : 'bg-neutral-700 text-neutral-300 hover:bg-neutral-600'
+                }`}
               >
-                Copy
+                {copiedId === 'api-key' ? '✓ Copied' : 'Copy'}
               </button>
             </div>
           </div>
