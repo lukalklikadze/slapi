@@ -24,6 +24,7 @@ export const APITester: React.FC<APITesterProps> = ({
   const [showTester, setShowTester] = useState(false);
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [copiedItem, setCopiedItem] = useState<string | null>(null);
 
   // Static endpoint presets
   const endpoints = useMemo(() => {
@@ -131,9 +132,11 @@ export const APITester: React.FC<APITesterProps> = ({
     }
   };
 
-  const copy = async (text: string) => {
+  const copy = async (text: string, id: string) => {
     try {
       await navigator.clipboard.writeText(text);
+      setCopiedItem(id);
+      setTimeout(() => setCopiedItem(null), 2000);
     } catch {
       // no-op
     }
@@ -408,10 +411,14 @@ export const APITester: React.FC<APITesterProps> = ({
                     Prettify
                   </button>
                   <button
-                    onClick={() => copy(requestBody)}
-                    className="rounded border border-neutral-600 px-2 py-1 text-xs text-neutral-200 hover:bg-neutral-700"
+                    onClick={() => copy(requestBody, 'request-body')}
+                    className={`rounded border px-2 py-1 text-xs transition-all ${
+                      copiedItem === 'request-body'
+                        ? 'border-accent-success bg-accent-success text-white'
+                        : 'border-neutral-600 text-neutral-200 hover:bg-neutral-700'
+                    }`}
                   >
-                    Copy
+                    {copiedItem === 'request-body' ? '✓ Copied' : 'Copy'}
                   </button>
                 </div>
               </div>
@@ -518,11 +525,15 @@ export const APITester: React.FC<APITesterProps> = ({
                         <div className="mb-1 flex items-center justify-end gap-2">
                           <button
                             onClick={() =>
-                              copy(JSON.stringify(req.response, null, 2))
+                              copy(JSON.stringify(req.response, null, 2), `response-${req.id}`)
                             }
-                            className="rounded border border-neutral-600 px-2 py-0.5 text-[11px] text-neutral-200 hover:bg-neutral-700"
+                            className={`rounded border px-2 py-0.5 text-[11px] transition-all ${
+                              copiedItem === `response-${req.id}`
+                                ? 'border-accent-success bg-accent-success text-white'
+                                : 'border-neutral-600 text-neutral-200 hover:bg-neutral-700'
+                            }`}
                           >
-                            Copy JSON
+                            {copiedItem === `response-${req.id}` ? '✓ Copied' : 'Copy JSON'}
                           </button>
                         </div>
                         <pre className="text-code-text overflow-x-auto text-xs whitespace-pre">
